@@ -18,10 +18,11 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from api.views import GameViewSet
+from api.views import GameViewSet, QuestionTypeViewSet
 
 router = DefaultRouter()
 router.register(r'games', GameViewSet,basename='games')
+router.register(r'questiontypes', QuestionTypeViewSet,basename='questiontypes')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

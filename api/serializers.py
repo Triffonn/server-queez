@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.db import transaction
 from rest_framework import serializers
-from api.models import Game, Round, Question, Answer
+from api.models import Game, Round, Question, Answer,QuestionType
 
 class AnswerWriteSerializer(serializers.ModelSerializer):
     class Meta:
@@ -65,7 +65,10 @@ class GameListSerializer(serializers.ModelSerializer):
         model = Game
         fields = ['title','description','creator','id']
 
-
+class QuestionTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QuestionType
+        fields = '__all__'
 
 
 

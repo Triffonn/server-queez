@@ -1,6 +1,7 @@
 from rest_framework import generics, viewsets
-from api.models import Game
-from api.serializers import GameSerializer, GameListSerializer
+from api.models import Game, QuestionType
+from api.serializers import GameSerializer, GameListSerializer, QuestionTypeSerializer
+
 
 class GameViewSet(viewsets.ModelViewSet):
     serializer_class = GameSerializer
@@ -17,4 +18,7 @@ class GameViewSet(viewsets.ModelViewSet):
             return GameSerializer
         else:
             return GameListSerializer
-        
+
+class QuestionTypeViewSet(viewsets.ModelViewSet):
+    queryset = QuestionType.objects.all()
+    serializer_class = QuestionTypeSerializer
