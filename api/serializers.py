@@ -1,3 +1,4 @@
+
 from rest_framework import serializers
 from django.db import transaction
 from rest_framework import serializers
@@ -61,9 +62,11 @@ class GameSerializer(serializers.ModelSerializer):
 class GameListSerializer(serializers.ModelSerializer):
     #class to provide information about all games
     id = serializers.UUIDField(source='uuid', read_only=True)
+    rounds_count = serializers.IntegerField(read_only=True)
+    questions_count = serializers.IntegerField(read_only=True)
     class Meta:
         model = Game
-        fields = ['title','description','creator','id']
+        fields = ['id','title','description','creator','rounds_count','questions_count']
 
 class QuestionTypeSerializer(serializers.ModelSerializer):
     class Meta:
