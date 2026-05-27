@@ -66,7 +66,7 @@ class GameListSerializer(serializers.ModelSerializer):
     questions_count = serializers.IntegerField(read_only=True)
     class Meta:
         model = Game
-        fields = ['id','title','description','creator','rounds_count','questions_count']
+        fields = ['id','title','description','creator','rounds_count','questions_count','created_at']
 
 class QuestionTypeSerializer(serializers.ModelSerializer):
     class Meta:
