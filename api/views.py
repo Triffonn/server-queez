@@ -1,5 +1,7 @@
 from django.db.models import Count
 from rest_framework import generics, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from api.models import Game, QuestionType
 from api.serializers import GameSerializer, GameListSerializer, QuestionTypeSerializer
 
@@ -9,7 +11,7 @@ class GameViewSet(viewsets.ModelViewSet):
     lookup_field = 'uuid'
 
     def get_queryset(self):
-        queryset = Game.objects.all()
+        queryset = Game.objects.all().order_by('-created_at')
         if self.action == 'list':
             queryset = queryset.annotate(
                 rounds_count=Count('rounds', distinct=True),
@@ -20,10 +22,16 @@ class GameViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_class(self):
-        if self.action in ('create', 'update', 'partial_update','retrieve'):
+        if self.action in ('create', 'full'):
             return GameSerializer
         else:
             return GameListSerializer
+
+    @action(detail=True,methods=['get'])
+    def full(self,request,uuid=None):
+        game = self.get_object()
+        serializer =self.get_serializer(game)
+        return Response(serializer.data)
 
 class QuestionTypeViewSet(viewsets.ModelViewSet):
     queryset = QuestionType.objects.all()
