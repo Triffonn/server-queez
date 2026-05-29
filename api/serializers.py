@@ -47,7 +47,7 @@ class GameSerializer(serializers.ModelSerializer):
     rounds = RoundWriteSerializer(many=True, required=False)
     class Meta:
         model = Game
-        fields = ["id",'title','description','creator','rounds']
+        fields = ["id",'title','description','creator','created_at','is_completed','rounds']
 
     @transaction.atomic
     def create(self,validated_data):
@@ -66,7 +66,7 @@ class GameListSerializer(serializers.ModelSerializer):
     questions_count = serializers.IntegerField(read_only=True)
     class Meta:
         model = Game
-        fields = ['id','title','description','creator','rounds_count','questions_count','created_at']
+        fields = ['id','title','description','creator','rounds_count','questions_count','created_at','is_completed']
 
 class QuestionTypeSerializer(serializers.ModelSerializer):
     class Meta:
