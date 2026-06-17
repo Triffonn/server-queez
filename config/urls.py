@@ -18,10 +18,11 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from api.views import GameViewSet, QuestionTypeViewSet
+from api.views import GameViewSet, QuestionTypeViewSet, RoundViewSet
 
 router = DefaultRouter()
 router.register(r'games', GameViewSet,basename='games')
+router.register(r'rounds', RoundViewSet,basename='rounds')
 router.register(r'questiontypes', QuestionTypeViewSet,basename='questiontypes')
 
 urlpatterns = [

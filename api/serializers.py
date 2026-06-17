@@ -73,7 +73,11 @@ class QuestionTypeSerializer(serializers.ModelSerializer):
         model = QuestionType
         fields = '__all__'
 
-
+class RoundSerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(source='uuid', read_only=True)
+    class Meta:
+        model = Round
+        fields = ['id','title','description','created_at','order']
 
 
 
