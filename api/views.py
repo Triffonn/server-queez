@@ -2,8 +2,8 @@ from django.db.models import Count
 from rest_framework import generics, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from api.models import Game, QuestionType, Round
-from api.serializers import GameSerializer, GameListSerializer, QuestionTypeSerializer, RoundSerializer
+from api.models import Game, Question, QuestionType, Round
+from api.serializers import GameSerializer, GameListSerializer, QuestionWriteSerializer, RoundSerializer,QuestionTypeSerializer
 
 
 class GameViewSet(viewsets.ModelViewSet):
@@ -63,4 +63,32 @@ class RoundViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(game=game)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class QuestionViewSet(viewsets.ModelViewSet):
+    serializer_class = QuestionWriteSerializer
+    lookup_field = 'uuid'
+
+    def get_queryset(self):
+        queryset = Question.objects.all()
+        round_uuid = self.request.query_params.get('round_id', None)
+        if self.action == 'list':
+            if not round_uuid:
+                return Question.objects.none()
+            return queryset.filter(round__uuid=round_uuid)
+        return queryset
+    
+    def create(self, request, *args, **kwargs):
+        # Достаём game_uuid из query params
+        round_uuid = request.query_params.get('round_id',None)
+        if not round_uuid:
+            return Response({'error': 'round_id обязателен в query params'},status=status.HTTP_400_BAD_REQUEST)
+        try:
+            round = Round.objects.get(uuid=round_uuid)
+        except Round.DoesNotExist:
+            return Response({'error': f'Round с uuid {round_uuid} не найден'},status=status.HTTP_404_NOT_FOUND)
+        # Передаём обновленные данные сериализатору
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(round=round)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
