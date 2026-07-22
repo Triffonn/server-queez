@@ -4,11 +4,35 @@ from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 
+class MediaType(models.Model):
+    #Словарь для хранения типов медиа
+    name = models.CharField(max_length=255,unique=True)
+
+class MediaTimeUsing(models.Model):
+    #Словарь для хранения типов использования медиа
+    name = models.CharField(max_length=255,unique=True)
+
+class Media(models.Model):
+    #Хранит медиа данные, которые могут быть у каждого объекта - можно добавлять к одной сущности много разного
+    uuid = models.UUIDField(default =uuid.uuid4, editable=False, unique=True)
+    content_type = models.ForeignKey(ContentType, on_delete=models.PROTECT)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+    media_type = models.ForeignKey(MediaType, on_delete=models.PROTECT)
+    media_time_using = models.ForeignKey(MediaTimeUsing, on_delete=models.PROTECT)
+    caption = models.TextField(blank = True)
+    file = models.FileField(upload_to='media/')
+    upload_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Медиа к  {self.content_object}'
+
 class Game(models.Model):
     uuid = models.UUIDField(default =uuid.uuid4, editable=False, unique=True)
     title = models.CharField(max_length=255)
     creator = models.CharField(max_length=255,blank=True)
     description = models.TextField(blank = True)
+    media = GenericRelation(Media)
     is_completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -24,7 +48,7 @@ class Round(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank = True)
     created_at = models.DateTimeField(auto_now_add=True)
-    #media = GenericRelation(Media)
+    media = GenericRelation(Media)
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -46,7 +70,7 @@ class Question(models.Model):
     round = models.ForeignKey(Round,related_name='questions',on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     content = models.TextField(blank=True)
-    #media = GenericRelation(Media)
+    media = GenericRelation(Media)
     question_type = models.ForeignKey(QuestionType, on_delete=models.DO_NOTHING,related_name='questions')
     order = models.PositiveIntegerField(default=0)
 
@@ -59,7 +83,7 @@ class Question(models.Model):
 class Answer(models.Model):
     question = models.ForeignKey(Question, related_name='answers', on_delete=models.CASCADE)
     content = models.TextField(blank=True)
-    #media = GenericRelation(Media)
+    media = GenericRelation(Media)
     order = models.PositiveIntegerField(default=0)
     is_correct = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -69,25 +93,3 @@ class Answer(models.Model):
 
     def __str__(self):
         return self.content
-
-"""
-Classes for future usage - while media will actual
-
-class MediaType(models.Model):
-    #Словарь для хранения типов медиа
-    name = models.CharField(max_length=255,unique=True)
-
-class Media(models.Model):
-    #Хранит медиа данные, которые могут быть у каждого объекта - можно добавлять к одной сущности много разного
-    uuid = models.UUIDField(default =uuid.uuid4, editable=False, unique=True)
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
-    content_object = GenericForeignKey('content_type', 'object_id')
-    media_type = models.ForeignKey(MediaType, on_delete=models.PROTECT)
-    caption = models.TextField(blank = True)
-    file = models.FileField(upload_to='media/')
-    upload_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f'Медиа к  {self.content_object}'
-"""

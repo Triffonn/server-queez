@@ -11,12 +11,12 @@ inflection==0.5.1
 jsonschema==4.26.0
 jsonschema-specifications==2025.9.1
 packaging==26.2
+Pillow==12.3.0
 psycopg2-binary==2.9.12
 PyJWT==2.12.1
 python-dotenv==1.2.2
 PyYAML==6.0.3
 referencing==0.37.0
-rest-framework-simplejwt==0.0.2
 rpds-py==0.30.0
 sqlparse==0.5.5
 typing_extensions==4.15.0

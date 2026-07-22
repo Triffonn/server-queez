@@ -2,8 +2,10 @@ from django.db.models import Count
 from rest_framework import generics, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from api.models import Game, Question, QuestionType, Round
-from api.serializers import GameSerializer, GameListSerializer, QuestionWriteSerializer, RoundSerializer,QuestionTypeSerializer
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.contrib.contenttypes.models import ContentType
+from api.models import Game, Question, QuestionType, Round,Answer,Media,MediaType,MediaTimeUsing
+from api.serializers import GameSerializer, GameListSerializer, MediaSerializer, QuestionWriteSerializer, RoundSerializer,QuestionTypeSerializer
 
 
 class GameViewSet(viewsets.ModelViewSet):
@@ -91,4 +93,48 @@ class QuestionViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(round=round)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class MediaViewSet(viewsets.ModelViewSet):
+    serializer_class = MediaSerializer
+    parser_classes = [MultiPartParser, FormParser]
+    lookup_field = 'uuid'
+
+    PARENT_PARAM_MODELS = {
+        'round_id': Round,
+        'question_id': Question,
+        'answer_id': Answer,
+        'game_id': Game,
+    }
+
+    def _resolve_parent(self):
+        matches = [(p, m) for p, m in self.PARENT_PARAM_MODELS.items() if self.request.query_params.get(p)]
+        if len(matches) != 1:
+            return None, None
+        param, model = matches[0]
+        value = self.request.query_params.get(param)
+        lookup = {'uuid': value} if model is not Answer else {'pk': value}
+        try:
+            return model, model.objects.get(**lookup)
+        except model.DoesNotExist:
+            return model, None
+
+    def get_queryset(self):
+        if self.action != 'list':
+            return Media.objects.all()
+        model, obj = self._resolve_parent()
+        if not model or not obj:
+            return Media.objects.none()
+        ct = ContentType.objects.get_for_model(model)
+        return Media.objects.filter(content_type=ct, object_id=obj.pk)
+
+    def create(self, request, *args, **kwargs):
+        model, obj = self._resolve_parent()
+        if not model:
+            return Response({'error': 'Нужен ровно один из query params: round_id, question_id, answer_id'}, status=status.HTTP_400_BAD_REQUEST)
+        if not obj:
+            return Response({'error': 'Родительский объект не найден'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(content_type=ContentType.objects.get_for_model(model), object_id=obj.pk)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

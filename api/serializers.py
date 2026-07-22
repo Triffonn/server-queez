@@ -2,22 +2,40 @@
 from rest_framework import serializers
 from django.db import transaction
 from rest_framework import serializers
-from api.models import Game, Round, Question, Answer,QuestionType
+from api.models import Game, Round, Question, Answer,QuestionType,Media,MediaType,MediaTimeUsing
+from api.validators import validate_media_file
+
+class MediaSerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(source='uuid', read_only=True)
+    media_type = serializers.SlugRelatedField(slug_field='name', queryset=MediaType.objects.all())
+    media_time_using = serializers.SlugRelatedField(slug_field='name', queryset=MediaTimeUsing.objects.all())
+
+    class Meta:
+        model = Media
+        fields = ['id', 'media_type', 'media_time_using', 'caption', 'file', 'upload_at']
+        read_only_fields = ['upload_at']
+
+    def validate(self, attrs):
+        file = attrs.get('file')
+        media_type = attrs.get('media_type')
+        if file and media_type:
+            validate_media_file(file, media_type)
+        return attrs
 
 class AnswerWriteSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
-
+    media = MediaSerializer(many=True, read_only=True)
     class Meta:
         model = Answer
-        fields = ['id','content','order','is_correct']
+        fields = ['id','content','order','is_correct',"media"]
 
 class QuestionWriteSerializer(serializers.ModelSerializer):
     answers = AnswerWriteSerializer(many=True, required=False)
     id = serializers.UUIDField(source='uuid', read_only=True)
-    
+    media = MediaSerializer(many=True, read_only=True)
     class Meta:
         model = Question
-        fields = ['id','content','question_type','order','answers']
+        fields = ['id','content','question_type','order','answers','media']
 
     def create(self,validated_data):
         answers_data = validated_data.pop('answers',[])
@@ -58,10 +76,10 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
 class RoundWriteSerializer(serializers.ModelSerializer):
     questions = QuestionWriteSerializer(many=True, required= False)
     id = serializers.UUIDField(source='uuid',read_only=True)
-
+    media = MediaSerializer(many=True, read_only=True)
     class Meta:
         model = Round
-        fields = ['id','title','description','order','questions']
+        fields = ['id','title','description','order','questions','media']
 
     def create(self,validated_data):
         questions_data = validated_data.pop('questions',[])
@@ -75,9 +93,10 @@ class RoundWriteSerializer(serializers.ModelSerializer):
 class GameSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField(source='uuid', read_only=True)
     rounds = RoundWriteSerializer(many=True, required=False)
+    media = MediaSerializer(many=True, read_only=True)
     class Meta:
         model = Game
-        fields = ["id",'title','description','creator','created_at','is_completed','rounds']
+        fields = ["id",'title','description','creator','created_at','is_completed','rounds','media']
 
     @transaction.atomic
     def create(self,validated_data):
@@ -105,9 +124,10 @@ class QuestionTypeSerializer(serializers.ModelSerializer):
 
 class RoundSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField(source='uuid', read_only=True)
+    media = MediaSerializer(many=True, read_only=True)
     class Meta:
         model = Round
-        fields = ['id','title','description','created_at','order']
+        fields = ['id','title','description','created_at','order','media']
 
 
 

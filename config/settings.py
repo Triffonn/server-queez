@@ -156,3 +156,8 @@ SIMPLE_JWT = {
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = Path(os.environ.get('RAILWAY_VOLUME_MOUNT_PATH', BASE_DIR)) / 'media'
+
+MAX_MEDIA_UPLOAD_SIZE = 20 * 1024 * 1024  # 20 МБ, единый лимит на файл
