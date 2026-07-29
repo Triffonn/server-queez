@@ -163,7 +163,7 @@ AWS_ACCESS_KEY_ID = os.environ.get('B2_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('B2_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = os.environ.get('B2_BUCKET_NAME')
 AWS_S3_ENDPOINT_URL = os.environ.get('B2_ENDPOINT_URL')
-AWS_S3_REGION_NAME = 'us-west-004'
+AWS_S3_REGION_NAME = 'eu-central-003'
 AWS_DEFAULT_ACL = None
 AWS_QUERYSTRING_EXPIRE = 60 * 60 * 24  # 24 часа — с запасом на длительность игры
 
