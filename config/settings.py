@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'api',
     'drf_spectacular',
     'django_extensions',
+    'storages',
 ]
 
 MIDDLEWARE = [
@@ -91,7 +92,8 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(
         default=f'sqlite:///{BASE_DIR}/db.sqlite3',
-        conn_max_age=600, ssl_require=True
+        conn_max_age=600, 
+        #ssl_require=True
     )
 }
 
@@ -156,9 +158,28 @@ SIMPLE_JWT = {
 }
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = Path(os.environ.get('RAILWAY_VOLUME_MOUNT_PATH', BASE_DIR)) / 'media'
+AWS_ACCESS_KEY_ID = os.environ.get('B2_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('B2_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('B2_BUCKET_NAME')
+AWS_S3_ENDPOINT_URL = os.environ.get('B2_ENDPOINT_URL')
+AWS_S3_REGION_NAME = 'us-west-004'
+AWS_DEFAULT_ACL = None
+AWS_QUERYSTRING_EXPIRE = 60 * 60 * 24  # 24 часа — с запасом на длительность игры
+
+USE_B2 = bool(AWS_STORAGE_BUCKET_NAME)
+
+if USE_B2:
+    STORAGES = {
+        'default': {'BACKEND': 'storages.backends.s3.S3Storage'},
+        'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
+    }
+else:
+    STORAGES = {
+        'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+        'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
+    }
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = Path(os.environ.get('RAILWAY_VOLUME_MOUNT_PATH', BASE_DIR)) / 'media'
 
 MAX_MEDIA_UPLOAD_SIZE = 20 * 1024 * 1024  # 20 МБ, единый лимит на файл

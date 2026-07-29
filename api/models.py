@@ -1,8 +1,17 @@
 from django.db import models
 import uuid
+import os
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
+
+
+def media_upload_path(instance, filename):
+    ext = os.path.splitext(filename)[1]  # расширение исходного файла, например .jpg
+    new_name = f"{instance.uuid}{ext}"
+    return os.path.join('media', new_name)
 
 class MediaType(models.Model):
     #Словарь для хранения типов медиа
@@ -21,11 +30,16 @@ class Media(models.Model):
     media_type = models.ForeignKey(MediaType, on_delete=models.PROTECT)
     media_time_using = models.ForeignKey(MediaTimeUsing, on_delete=models.PROTECT)
     caption = models.TextField(blank = True)
-    file = models.FileField(upload_to='media/')
+    file = models.FileField(upload_to=media_upload_path)
     upload_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f'Медиа к  {self.content_object}'
+
+@receiver(post_delete, sender=Media)
+def delete_media_file_on_delete(sender, instance, **kwargs):
+    if instance.file:
+        instance.file.delete(save=False)
 
 class Game(models.Model):
     uuid = models.UUIDField(default =uuid.uuid4, editable=False, unique=True)

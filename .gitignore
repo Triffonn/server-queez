@@ -7,3 +7,4 @@ db.sqlite3
 .idea/
 .DS_Store
 media/
+.json
