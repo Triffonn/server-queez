@@ -152,6 +152,35 @@ class QuestionViewSet(viewsets.ModelViewSet):
             order = instance.order
             instance.delete()
             Question.objects.filter(round=round_obj, order__gt=order).update(order=F('order') - 1)
+    
+    @action(detail=False, methods=['post'], url_path='reorder')
+    def reorder(self, request):
+        round_uuid = request.query_params.get('round_id')
+        if not round_uuid:
+            return Response({'error': 'round_id обязателен в query params'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            round_obj = Round.objects.get(uuid=round_uuid)
+        except Round.DoesNotExist:
+            return Response({'error': f'Round с uuid {round_uuid} не найден'}, status=status.HTTP_404_NOT_FOUND)
+
+        new_order = request.data.get('order')
+        if not isinstance(new_order, list):
+            return Response({'error': 'Ожидается список uuid вопросов в поле order'}, status=status.HTTP_400_BAD_REQUEST)
+
+        questions = {str(q.uuid): q for q in Question.objects.filter(round=round_obj)}
+        if set(new_order) != set(questions.keys()):
+            return Response({'error': 'Список order должен содержать все вопросы раунда без пропусков и дублей'}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            for index, uuid_str in enumerate(new_order):
+                q = questions[uuid_str]
+                if q.order != index:
+                    q.order = index
+                    q.save(update_fields=['order'])
+
+        queryset = Question.objects.filter(round=round_obj).order_by('order')
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 class MediaViewSet(viewsets.ModelViewSet):
     serializer_class = MediaSerializer
