@@ -119,9 +119,10 @@ class GameListSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField(source='uuid', read_only=True)
     rounds_count = serializers.IntegerField(read_only=True)
     questions_count = serializers.IntegerField(read_only=True)
+    media = MediaSerializer(many=True, read_only=True)
     class Meta:
         model = Game
-        fields = ['id','title','description','creator','rounds_count','questions_count','created_at','is_completed']
+        fields = ['id','title','description','creator','rounds_count','questions_count','created_at','is_completed','media']
 
 class QuestionTypeSerializer(serializers.ModelSerializer):
     class Meta:
