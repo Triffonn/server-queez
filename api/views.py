@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.contenttypes.models import ContentType
 from api.models import Game, Question, QuestionType, Round,Answer,Media,MediaType,MediaTimeUsing
-from api.serializers import GameSerializer, GameListSerializer, MediaSerializer, QuestionWriteSerializer, RoundSerializer,QuestionTypeSerializer
+from api.serializers import GameSerializer, GameListSerializer, MediaSerializer, MediaTimeUsingSerializer, MediaTypeSerializer, QuestionWriteSerializer, RoundSerializer,QuestionTypeSerializer
 
 
 class GameViewSet(viewsets.ModelViewSet):
@@ -38,6 +38,14 @@ class GameViewSet(viewsets.ModelViewSet):
 class QuestionTypeViewSet(viewsets.ModelViewSet):
     queryset = QuestionType.objects.all()
     serializer_class = QuestionTypeSerializer
+
+class MediaTimeUsingViewSet(viewsets.ModelViewSet):
+    queryset = MediaTimeUsing.objects.all()
+    serializer_class = MediaTimeUsingSerializer
+
+class MediaTypeViewSet(viewsets.ModelViewSet):
+    queryset = MediaType.objects.all()
+    serializer_class = MediaTypeSerializer
 
 class RoundViewSet(viewsets.ModelViewSet):
     serializer_class = RoundSerializer

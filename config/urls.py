@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from api.views import GameViewSet, QuestionTypeViewSet, RoundViewSet,QuestionViewSet,MediaViewSet
+from api.views import GameViewSet, MediaTimeUsingViewSet, MediaTypeViewSet, QuestionTypeViewSet, RoundViewSet,QuestionViewSet,MediaViewSet
 from django.conf import settings
 from django.urls import re_path
 from django.views.static import serve as static_serve
@@ -29,6 +29,9 @@ router.register(r'rounds', RoundViewSet,basename='rounds')
 router.register(r'questions', QuestionViewSet,basename='questions')
 router.register(r'questiontypes', QuestionTypeViewSet,basename='questiontypes')
 router.register(r'media', MediaViewSet, basename='media')
+router.register(r'mediatypes', MediaTypeViewSet, basename='mediatypes')
+router.register(r'mediatimeusing', MediaTimeUsingViewSet, basename='mediatimeusing')
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),

@@ -122,6 +122,16 @@ class QuestionTypeSerializer(serializers.ModelSerializer):
         model = QuestionType
         fields = '__all__'
 
+class MediaTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MediaType
+        fields = '__all__'
+
+class MediaTimeUsingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MediaTimeUsing
+        fields = '__all__'
+
 class RoundSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField(source='uuid', read_only=True)
     media = MediaSerializer(many=True, read_only=True)
