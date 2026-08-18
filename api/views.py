@@ -86,6 +86,38 @@ class RoundViewSet(viewsets.ModelViewSet):
             instance.delete()
             Round.objects.filter(game=game, order__gt=order).update(order=F('order') - 1)
 
+    @action(detail=False, methods=['post'],url_path='reorder')
+    def reorder(self, request):
+        game_uuid = request.query_params.get('game_id', None)
+        if not game_uuid:
+            return Response({'error': 'game_id обязателен в query params'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            game = Game.objects.get(uuid=game_uuid)
+        except Game.DoesNotExist:
+            return Response({'error': f'Игра с uuid {game_uuid} не найдена'}, status=status.HTTP_404_NOT_FOUND)
+
+        new_order = request.data.get('order')
+        if not isinstance(new_order, list):
+            return Response({'error': 'Ожидается список uuid раундов в поле order'}, status=status.HTTP_400_BAD_REQUEST)
+
+        rounds =  {str(r.uuid): r for r in Round.objects.filter(game=game)}
+        if set(new_order) != set(rounds.keys()):
+            return Response({'error': 'Список order должен содержать все раунды игры без пропусков и дублей'}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            # проход 1: временные значения, чтобы не столкнуться с unique_together('game','order')
+            for r in rounds.values():
+                r.order = r.order + 100000
+                r.save(update_fields=['order'])
+            # проход 2: финальные значения по присланному порядку
+            for index, uuid_str in enumerate(new_order):
+                r = rounds[uuid_str]
+                r.order = index
+                r.save(update_fields=['order'])
+        queryset = Round.objects.filter(game=game).order_by('order')
+        serializer = RoundSerializer(queryset, many=True)
+        return Response(serializer.data)
+
 class QuestionViewSet(viewsets.ModelViewSet):
     serializer_class = QuestionWriteSerializer
     lookup_field = 'uuid'
