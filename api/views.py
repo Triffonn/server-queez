@@ -1,4 +1,5 @@
-from django.db.models import Count
+from django.db.models import Count, F
+from django.db import transaction
 from rest_framework import generics, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -15,6 +16,9 @@ class GameViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Game.objects.all().order_by('-created_at')
         if self.action == 'list':
+            is_complited = self.request.query_params.get('is_completed', None)
+            if is_complited is not None:
+                queryset = queryset.filter(is_completed=is_complited.lower() == 'true')
             queryset = queryset.annotate(
                 rounds_count=Count('rounds', distinct=True),
                 questions_count=Count('rounds__questions', distinct=True)
@@ -75,6 +79,13 @@ class RoundViewSet(viewsets.ModelViewSet):
         serializer.save(game=game)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    def perform_destroy(self, instance):
+        with transaction.atomic():
+            game = instance.game
+            order = instance.order
+            instance.delete()
+            Round.objects.filter(game=game, order__gt=order).update(order=F('order') - 1)
+
 class QuestionViewSet(viewsets.ModelViewSet):
     serializer_class = QuestionWriteSerializer
     lookup_field = 'uuid'
@@ -102,6 +113,13 @@ class QuestionViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save(round=round)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def perform_destroy(self, instance):
+        with transaction.atomic():
+            round_obj = instance.round
+            order = instance.order
+            instance.delete()
+            Question.objects.filter(round=round_obj, order__gt=order).update(order=F('order') - 1)
 
 class MediaViewSet(viewsets.ModelViewSet):
     serializer_class = MediaSerializer

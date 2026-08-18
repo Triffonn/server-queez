@@ -53,24 +53,30 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
-
+        
         if answers_data is not None:
-            existing = {a.id: a for a in instance.answers.all()}
-            seen_ids = set()
-            for answer_data in answers_data:
-                answer_id = answer_data.pop('id', None)
-                if answer_id is not None:
-                    answer = existing.get(answer_id)
-                    if answer is None:
-                        raise serializers.ValidationError(f'Ответ с id={answer_id} не принадлежит этому вопросу')
-                    for attr, value in answer_data.items():
-                        setattr(answer, attr, value)
-                    answer.save()
-                    seen_ids.add(answer_id)
-                else:
-                    new_answer = Answer.objects.create(question=instance, **answer_data)
-                    seen_ids.add(new_answer.id)
-            instance.answers.exclude(id__in=seen_ids).delete()
+            with transaction.atomic():
+                existing = {a.id: a for a in instance.answers.all()}
+                seen_ids = set()
+                for answer_data in answers_data:
+                    answer_id = answer_data.pop('id', None)
+                    if answer_id is not None:
+                        answer = existing.get(answer_id)
+                        if answer is None:
+                            raise serializers.ValidationError(f'Ответ с id={answer_id} не принадлежит этому вопросу')
+                        for attr, value in answer_data.items():
+                            setattr(answer, attr, value)
+                        answer.save()
+                        seen_ids.add(answer_id)
+                    else:
+                        new_answer = Answer.objects.create(question=instance, **answer_data)
+                        seen_ids.add(new_answer.id)
+                instance.answers.exclude(id__in=seen_ids).delete()
+                remaining = list(instance.answers.order_by('order','id'))
+                for index, answer in enumerate(remaining):
+                    if answer.order != index:
+                        answer.order = index
+                        answer.save(update_fields=['order'])
         return instance
 
 class RoundWriteSerializer(serializers.ModelSerializer):
