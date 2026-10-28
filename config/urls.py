@@ -22,6 +22,8 @@ from api.views import GameViewSet, MediaTimeUsingViewSet, MediaTypeViewSet, Ques
 from django.conf import settings
 from django.urls import re_path
 from django.views.static import serve as static_serve
+from api.views import RegisterView
+from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView
 
 router = DefaultRouter()
 router.register(r'games', GameViewSet,basename='games')
@@ -32,9 +34,12 @@ router.register(r'media', MediaViewSet, basename='media')
 router.register(r'mediatypes', MediaTypeViewSet, basename='mediatypes')
 router.register(r'mediatimeusing', MediaTimeUsingViewSet, basename='mediatimeusing')
 
-
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path("api/auth/register/", RegisterView.as_view(), name="register"),
+    path("api/auth/login/",TokenObtainPairView.as_view(),name="token_obtain_pair"),
+    path("api/auth/refresh/",TokenRefreshView.as_view(),name="token_refresh"),
+    
     path('api/', include(router.urls)),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='docs'),

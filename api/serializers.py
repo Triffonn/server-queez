@@ -1,9 +1,13 @@
 
 from rest_framework import serializers
 from django.db import transaction
-from rest_framework import serializers
 from api.models import Game, Round, Question, Answer,QuestionType,Media,MediaType,MediaTimeUsing
 from api.validators import validate_media_file
+from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+
+User = get_user_model()
 
 class MediaSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField(source='uuid', read_only=True)
@@ -100,6 +104,8 @@ class GameSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField(source='uuid', read_only=True)
     rounds = RoundWriteSerializer(many=True, required=False)
     media = MediaSerializer(many=True, read_only=True)
+    creator = serializers.SerializerMethodField()
+
     class Meta:
         model = Game
         fields = ["id",'title','description','creator','created_at','is_completed','rounds','media']
@@ -114,15 +120,26 @@ class GameSerializer(serializers.ModelSerializer):
             round_serializer.create(round_data)
         return game
 
+    def get_creator(self,obj):
+        if obj.creator is None:
+            return ""
+        return obj.creator.get_full_name().strip() or obj.creator.get_username()
+
 class GameListSerializer(serializers.ModelSerializer):
     #class to provide information about all games
     id = serializers.UUIDField(source='uuid', read_only=True)
     rounds_count = serializers.IntegerField(read_only=True)
     questions_count = serializers.IntegerField(read_only=True)
     media = MediaSerializer(many=True, read_only=True)
+    creator = serializers.SerializerMethodField()
     class Meta:
         model = Game
         fields = ['id','title','description','creator','rounds_count','questions_count','created_at','is_completed','media']
+
+    def get_creator(self,obj):
+        if obj.creator is None:
+            return ""
+        return obj.creator.get_full_name().strip() or obj.creator.get_username()
 
 class QuestionTypeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -145,6 +162,33 @@ class RoundSerializer(serializers.ModelSerializer):
     class Meta:
         model = Round
         fields = ['id','title','description','created_at','order','media']
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(
+        write_only=True,
+        trim_whitespace=False,
+        min_length=8,
+    )
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "password","email"]
+        read_only_fields = ["id"]
+
+    def validate(self, attrs):
+        user = User(username=attrs["username"])
+
+        try:
+            validate_password(attrs["password"], user=user)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(
+                {"password": exc.messages}
+            )
+        return attrs
+
+    def create(self, validated_data):
+        return User.objects.create_user(**validated_data)
 
 
 

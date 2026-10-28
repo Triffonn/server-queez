@@ -44,7 +44,7 @@ def delete_media_file_on_delete(sender, instance, **kwargs):
 class Game(models.Model):
     uuid = models.UUIDField(default =uuid.uuid4, editable=False, unique=True)
     title = models.CharField(max_length=255)
-    creator = models.CharField(max_length=255,blank=True)
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True,related_name="games")
     description = models.TextField(blank = True)
     media = GenericRelation(Media)
     is_completed = models.BooleanField(default=False)

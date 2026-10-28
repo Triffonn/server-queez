@@ -7,11 +7,17 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.contenttypes.models import ContentType
 from api.models import Game, Question, QuestionType, Round,Answer,Media,MediaType,MediaTimeUsing
 from api.serializers import GameSerializer, GameListSerializer, MediaSerializer, MediaTimeUsingSerializer, MediaTypeSerializer, QuestionWriteSerializer, RoundSerializer,QuestionTypeSerializer
-
+from rest_framework import generics
+from api.serializers import RegisterSerializer
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 class GameViewSet(viewsets.ModelViewSet):
     serializer_class = GameSerializer
     lookup_field = 'uuid'
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
 
     def get_queryset(self):
         queryset = Game.objects.all().order_by('-created_at')
@@ -225,3 +231,8 @@ class MediaViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save(content_type=ContentType.objects.get_for_model(model), object_id=obj.pk)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class RegisterView(generics.CreateAPIView):
+    serializer_class = RegisterSerializer
+    permission_classes = [AllowAny]
+    authentication_classes = []
